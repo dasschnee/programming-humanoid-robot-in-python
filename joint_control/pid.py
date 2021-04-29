@@ -52,7 +52,7 @@ class PIDController(object):
         @param sensor: current values from sensor
         @return control signal
         '''
-        # YOUR CODE HERE
+        self.u = self.u + ( self.Kp + self.Ki * self.dt + self.Kd / self.dt ) * (target - sensor)  - (self.Kp + (2*self.Kd) / self.dt) + self.e1 + (self.Kd / self.dt) * self.e2
 
         return self.u
 
