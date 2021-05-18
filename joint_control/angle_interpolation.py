@@ -53,20 +53,17 @@ class AngleInterpolationAgent(PIDAgent):
         for count, time in enumerate(times):
             k = len(time) - 1 if len(time) <= 3  else 3
 
-            skipped_joints = 0
             if time[-1] < time_interval:
-                skipped_joints += 1
-
-                if(skipped_joints == len(names)):
-                    self.start = -1
-                    self.keyframes = ([],[],[])
+                print('reset')
+                self.start_time = -1
+                self.keyframes = ([],[],[])
                 continue
 
             tck = interpolate.splrep(time, joint_angles[count], k=k)
             target_joints[names[count]] = (interpolate.splev([time_interval], tck)[0])
         
-        if "LHipYawPitch" in target_joints:
-            target_joints["RHipYawPitch"] = target_joints["LHipYawPitch"]
+            if "LHipYawPitch" in target_joints:
+                target_joints["RHipYawPitch"] = target_joints["LHipYawPitch"]
 
         return target_joints
 
