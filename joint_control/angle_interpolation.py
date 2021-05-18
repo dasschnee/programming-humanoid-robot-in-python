@@ -21,8 +21,8 @@
 
 
 from pid import PIDAgent
-from keyframes import hello
-
+from keyframes import *
+from scipy import interpolate
 
 class AngleInterpolationAgent(PIDAgent):
     def __init__(self, simspark_ip='localhost',
@@ -32,6 +32,7 @@ class AngleInterpolationAgent(PIDAgent):
                  sync_mode=True):
         super(AngleInterpolationAgent, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
         self.keyframes = ([], [], [])
+        self.start_time = -1
 
     def think(self, perception):
         target_joints = self.angle_interpolation(self.keyframes, perception)
@@ -40,9 +41,38 @@ class AngleInterpolationAgent(PIDAgent):
 
     def angle_interpolation(self, keyframes, perception):
         target_joints = {}
-        # YOUR CODE HERE
+
+        if self.start_time == -1:
+            self.start_time = perception.time
+        
+        (names, times, keys) = keyframes
+        joint_angles = [[joint_angle[0] for joint_angle in angle] for angle in keys]
+
+        null_array = [0] * len(names)
+        target_joints = dict(zip(names, null_array))
+        time_interval = perception.time - self.start_time
+
+        for count, time in enumerate(times):
+            k = len(time) - 1 if len(time) <= 3  else 3
+
+            skipped_joints = 0
+            if time[-1] < time_interval:
+                skipped_joints += 1
+
+                if(skipped_joints == len(names)):
+                    self.start = -1
+                    self.keyframes = ([],[],[])
+                continue
+
+            tck = interpolate.splrep(time, joint_angles[count], k=k)
+            target_joints[names[count]] = (interpolate.splev([time_interval], tck)[0])
+        
+        if "LHipYawPitch" in names:
+            target_joints["RHipYawPitch"] = target_joints["LHipYawPitch"]
 
         return target_joints
+
+    
 
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()

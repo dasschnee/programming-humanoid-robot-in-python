@@ -18,7 +18,6 @@ import numpy as np
 from collections import deque
 from spark_agent import SparkAgent, JOINT_CMD_NAMES
 
-
 class PIDController(object):
     '''a discretized PID controller, it controls an array of servos,
        e.g. input is an array and output is also an array
@@ -35,9 +34,9 @@ class PIDController(object):
         self.e2 = np.zeros(size)
         # ADJUST PARAMETERS BELOW
         delay = 0
-        self.Kp = 0
-        self.Ki = 0
-        self.Kd = 0
+        self.Kp = 33
+        self.Ki = 0.2
+        self.Kd = -0.1
         self.y = deque(np.zeros(size), maxlen=delay + 1)
 
     def set_delay(self, delay):
@@ -52,8 +51,16 @@ class PIDController(object):
         @param sensor: current values from sensor
         @return control signal
         '''
-        self.u = self.u + ( self.Kp + self.Ki * self.dt + self.Kd / self.dt ) * (target - sensor)  - (self.Kp + (2*self.Kd) / self.dt) + self.e1 + (self.Kd / self.dt) * self.e2
+        e0 = target - sensor 
 
+        self.u = self.u + (self.Kp + self.Ki*self.dt + self.Kd/self.dt) * e0 - (self.Kp + (2*self.Kd)/self.dt) * self.e1 + (self.Kd/self.dt) * self.e2 
+
+        y = self.y.popleft() 
+        s = ((y - sensor) + (self.u - sensor)) / (2*self.dt)
+        self.y.append(self.u + s*self.dt)
+        
+        self.e2 = self.e1
+        self.e1 = e0 
         return self.u
 
 
