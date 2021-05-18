@@ -47,7 +47,6 @@ class TestStandingUpAgent(StandingUpAgent):
             action.stiffness = {j: 1 for j in self.joint_names}  # turn on joints
         if time_now - self.stiffness_on_off_time > self.stiffness_on_cycle + self.stiffness_off_cycle:
             self.stiffness_on_off_time = time_now
-
         return action
 
 
