@@ -49,17 +49,20 @@ class AngleInterpolationAgent(PIDAgent):
         joint_angles = [[joint_angle[0] for joint_angle in angle] for angle in keys]
 
         time_interval = perception.time - self.start_time
-
+        skipped_joints = 0
         for count, time in enumerate(times):
             k = len(time) - 1 if len(time) <= 3  else 3
-
+            
+            last_angles = list(map(lambda keys : keys[-1][0], keyframes[2]))
             if time[-1] < time_interval:
-                print('reset')
-                self.start_time = -1
-                self.keyframes = ([],[],[])
+                skipped_joints += 1
+                if skipped_joints == len(times):
+                    self.start_time = -1
+                    self.keyframes = ([],[],[])
+                target_joints[names[count]] = last_angles[count]
                 continue
-
-            tck = interpolate.splrep(time, joint_angles[count], k=k)
+            
+            tck = interpolate.splrep(time, joint_angles[count], k=k, s=0)
             target_joints[names[count]] = (interpolate.splev([time_interval], tck)[0])
         
             if "LHipYawPitch" in target_joints:
