@@ -55,7 +55,7 @@ class PIDController(object):
 
         self.u = self.u + (self.Kp + self.Ki*self.dt + self.Kd/self.dt) * e0 - (self.Kp + (2*self.Kd)/self.dt) * self.e1 + (self.Kd/self.dt) * self.e2 
 
-        y = self.y.popleft() 
+        y = self.y[-1]
         s = ((y - sensor) + (self.u - sensor)) / (2*self.dt)
         self.y.append(self.u + s*self.dt)
         

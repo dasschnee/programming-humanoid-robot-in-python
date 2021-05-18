@@ -48,8 +48,8 @@ class AngleInterpolationAgent(PIDAgent):
         (names, times, keys) = keyframes
         joint_angles = [[joint_angle[0] for joint_angle in angle] for angle in keys]
 
-        null_array = [0] * len(names)
-        target_joints = dict(zip(names, null_array))
+        # null_array = [0] * len(names)
+        # target_joints = dict(zip(names, null_array))
         time_interval = perception.time - self.start_time
 
         for count, time in enumerate(times):
