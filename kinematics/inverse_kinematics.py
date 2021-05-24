@@ -15,6 +15,7 @@ from numpy.matlib import identity
 import numpy as np
 from math import atan2, sqrt, pi, pow
 from sets import Set
+from numpy import inner, dot 
 
 EPSILON = 1e-3
 
@@ -51,7 +52,7 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
 
             self.refresh_joints(joints, theta)
 
-            if np.inner(error, error) < EPSILON:
+            if inner(error, error) < EPSILON:
                 break
             
         return theta
@@ -64,11 +65,11 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
             joints[key] = theta[i]
      
     def jacobian_transpose(self, alpha, jacobian_matrix, error):
-        return alpha * np.dot(jacobian_matrix.T, error)
+        return alpha * dot(jacobian_matrix.T, error)
 
     def get_jacobian_scalar(self, jacobian_matrix, error):
-        JJTe = np.dot(np.dot(jacobian_matrix, np.transpose(jacobian_matrix)), error)
-        return float(np.inner(error, JJTe)) / float(np.inner(JJTe, JJTe))
+        JJTe = dot(dot(jacobian_matrix, jacobian_matrix.T), error)
+        return float(inner(error, JJTe)) / float(inner(JJTe, JJTe))
 
     def set_transforms(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
@@ -83,21 +84,16 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         self.keyframes = (names, times, keys)
         
     def get_jacobian_matrix(self, Te, T, effector_chain):
-        jacobi = np.zeros((6, len(effector_chain)))
-        for i, (x, t) in enumerate(T.iteritems()):
+        jacobi_matrix = np.zeros((6, len(effector_chain)))
+        for i, t in enumerate(T.values()):
             x, y, z = self.get_joint_coordinates(t)
-            jacobi[:i] = (Te - np.array([x, y, z, 0, 0, 0]))
-        return self.set_joint_axis(jacobi, effector_chain)
+            jacobi_matrix[:i] = (Te - np.array([x, y, z, 0, 0, 0]))
+        return self.set_joint_axis(jacobi_matrix, effector_chain)
         
     def get_joint_coordinates(self, transform):
         return transform[-1,0] ,transform[-1,1] ,transform[-1,2]
             
-    def get_joint_values(self, transform):
-        """
-        :param transform: transformation matrix
-        :return array with coordinates and angles
-        """
-        
+    def get_joint_values(self, transform):    
         x, y, z = self.get_joint_coordinates(transform)
         
         if(transform[2,0] > 1e-3):
@@ -132,5 +128,5 @@ if __name__ == '__main__':
     T = identity(4)
     T[-1, 1] = 0.05
     T[-1, 2] = 0.26
-    agent.set_transforms('LLeg', T)
+    agent.set_transforms('RLeg', T)
     agent.run()
