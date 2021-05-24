@@ -20,7 +20,7 @@ import os
 import sys
 from numpy import angle,sin, cos, pi, random
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'joint_control'))
-
+import numpy as np
 from numpy.matlib import matrix, identity
 
 from angle_interpolation import AngleInterpolationAgent
@@ -44,7 +44,7 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
                        'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch', 'RAnkleRoll']
                        }
 
-        self.jointOffsets = {'HeadYaw': [0, 0, 126.5],
+        self.links = {'HeadYaw': [0, 0, 126.5],
                              'HeadPitch': [0, 0, 0],
                              'LShoulderPitch': [0, 98, 100],
                              'LShoulderRoll': [0, 0, 0],
@@ -81,12 +81,11 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         :return: transformation
         :rtype: 4x4 matrix
         '''
-        # YOUR CODE HERE
         a = joint_angle
 
-        x = self.jointOffsets[joint_name][0]
-        y = self.jointOffsets[joint_name][1]
-        z = self.jointOffsets[joint_name][2]
+        x = self.links[joint_name][0]
+        y = self.links[joint_name][1]
+        z = self.links[joint_name][2]
         c = cos(a)
         s = sin(a)
 
@@ -115,13 +114,14 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
 
         :param joints: {joint_name: joint_angle}
         '''
-        for chain_joints in self.chains.values():
-            T = identity(4)
-            for joint in chain_joints:
-                angle = joints[joint]
-                T1 = self.local_trans(joint, angle)
-                T*=T1
-                self.transforms[joint] = T
+        T = identity(4)
+        
+        for joint in joints.keys():
+            angle = joints[joint]
+            Tl = self.local_trans(joint, angle)
+            T = np.dot(T, Tl)
+
+            self.transforms[joint] = T
 
 if __name__ == '__main__':
     agent = ForwardKinematicsAgent()
