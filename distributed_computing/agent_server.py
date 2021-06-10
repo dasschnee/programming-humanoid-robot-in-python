@@ -13,17 +13,20 @@
 
 # add PYTHONPATH
 import os
+import os.path as osp
 import sys
 
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'kinematics'))
+sys.path.append(osp.join(osp.abspath(osp.dirname(osp.dirname(__file__))), 'kinematics'))
+sys.path.append(osp.join(osp.abspath(osp.dirname(osp.dirname(__file__))), 'joint_control'))
 
 from inverse_kinematics import InverseKinematicsAgent
+from recognize_posture import PostureRecognitionAgent
 import numpy as np
 import time
 import threading
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
-class RequestHandler(SimpleXMLRPCRequestHandler):
+class RequestHandler(SimpleXMLRPCRequestHandler, PostureRecognitionAgent):
     rpc_paths = ('/RPC2',)
 
 class ServerAgent(InverseKinematicsAgent):
@@ -50,7 +53,7 @@ class ServerAgent(InverseKinematicsAgent):
     def set_angle(self, joint_name, angle):
         '''set target angle of joint for PID controller
         '''
-        self.perception.joint[joint_name] = angle
+        self.target_joints[joint_name] = angle
 
     def get_posture(self):
         '''return current posture of robot'''
@@ -61,14 +64,13 @@ class ServerAgent(InverseKinematicsAgent):
         '''excute keyframes, note this function is blocking call,
         e.g. return until keyframes are executed
         '''
-        # YOUR CODE HERE
         self.keyframes = keyframes
-        _ , times , _ = keyframes
         self.angle_interpolation(keyframes, self.perception)
-        
+        _ , times , _ = keyframes
         longest_time  = max([max(list) for list in times])
         time.sleep(longest_time)
         self.keyframes = ([], [], [])
+
 
     def get_transform(self, name):
         '''get transform with given name

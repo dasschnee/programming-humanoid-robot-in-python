@@ -10,6 +10,11 @@ import weakref
 from xmlrpc.client import ServerProxy
 import numpy as np
 import threading
+import os
+import sys
+import time
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'joint_control'))
+from keyframes import *
 
 class PostHandler(object):
     '''the post hander wraps function to be excuted in parallel
@@ -27,7 +32,7 @@ class PostHandler(object):
     def set_transform(self, effector_name, transform):
         '''non-blocking call of ClientAgent.set_transform'''
         # YOUR CODE HERE
-        self.server.set_transforms(effector_name, transform.tolist())
+        self.server.set_transforms(effector_name, transform)
 
 class ClientAgent(object):
     '''ClientAgent request RPC service from remote server
@@ -58,10 +63,7 @@ class ClientAgent(object):
         '''
         # YOUR CODE HERE
         self.post.server.execute_keyframes(keyframes)
-        # times = keyframes[1]
-        # m = max([max(list) for list in times])
-        # sleep(m)
-        # self.keyframes = ([], [], [])
+
 
     def get_transform(self, name):
         '''get transform with given name
@@ -77,4 +79,4 @@ class ClientAgent(object):
 
 if __name__ == '__main__':
     agent = ClientAgent()
-    agent.execute_keyframes()
+    agent.execute_keyframes(hello())
